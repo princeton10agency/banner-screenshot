@@ -1,0 +1,43 @@
+{
+  "name": "@p10agency/banner-screenshot",
+  "version": "1.0.0",
+  "description": "CLI for capturing ISI and frame screenshots of built banner projects.",
+  "publishConfig": {
+    "access": "public"
+  },
+  "bin": {
+    "banner-screenshot": "bin/banner-screenshot.cjs"
+  },
+  "scripts": {
+    "test": "node ./test/integration.cjs"
+  },
+  "files": [
+    "bin",
+    "lib"
+  ],
+  "keywords": [
+    "banner",
+    "screenshot",
+    "isi",
+    "frame",
+    "ads"
+  ],
+  "author": "jamestomasino",
+  "license": "ISC",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/princeton10agency/banner-screenshot.git"
+  },
+  "bugs": {
+    "url": "https://github.com/princeton10agency/banner-screenshot/issues"
+  },
+  "homepage": "https://github.com/princeton10agency/banner-screenshot#readme",
+  "type": "commonjs",
+  "dependencies": {
+    "playwright-core": "^1.62.1",
+    "adm-zip": "^0.5.10"
+  },
+  "devDependencies": {
+    "sharp": "^0.34.5"
+  }
+}
