@@ -2,7 +2,7 @@
 const path = require('path')
 const fs = require('fs')
 
-const { captureIsiScreenshots, captureFrameScreenshots } = require('../lib/capture')
+const { captureIsiScreenshots, captureFrameScreenshots } = require('../lib/capture.cjs')
 
 function parseArgs(argv) {
   const flags = {
@@ -77,7 +77,7 @@ function main() {
 
   if (flags.help) {
     printHelp()
-    return
+    return Promise.resolve()
   }
 
   if (!flags.isiScreenshots && !flags.frameScreenshots) {
