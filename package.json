@@ -1,6 +1,6 @@
 {
   "name": "@p10agency/banner-screenshot",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "CLI for capturing ISI and frame screenshots of built banner projects.",
   "publishConfig": {
     "access": "public"
