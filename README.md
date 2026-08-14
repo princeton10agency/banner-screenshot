@@ -22,6 +22,9 @@ npx banner-screenshot . --frame-screenshots
 # Capture both
 npx banner-screenshot . --all
 
+# Capture ISI timing screenshots (end of animation)
+npx banner-screenshot . --isi-timing-screenshots
+
 # Write to a custom output directory
 npx banner-screenshot . --all --output ./screenshots
 ```
@@ -29,6 +32,7 @@ npx banner-screenshot . --all --output ./screenshots
 Screenshots are packaged into a zip file per mode:
 - `<project>-isi-screenshots.zip` — one PNG per variant (full-height ISI capture)
 - `<project>-frame-screenshots.zip` — one PNG per frame per variant
+- `<project>-isi-timing-screenshots.zip` — one PNG per variant (screenshot at ISI start delay)
 
 By default output goes to `./screenshots/` inside the project root.
 
@@ -75,6 +79,16 @@ Frame screenshots detect animation frame markers in your banner JavaScript. The 
 
 Each detected frame produces a screenshot at the variant's configured size, using the `?frame=N` query parameter to navigate to that frame.
 
+## ISI Timing Screenshots
+
+ISI timing screenshots capture a single frame at the moment the ISI is scheduled to start — the end of the banner animation. This mode is useful for banners without frame markers, where you want to verify the final animated state before the ISI appears.
+
+The tool detects `autoPlayStartDelay` in your banner JavaScript:
+- **Static values** (e.g. `autoPlayStartDelay: 8`) are parsed directly
+- **Dynamic values** (e.g. `(tl ? tl.duration() : 0) + 2`) are captured at runtime via ISI constructor proxying
+
+Banners with frame markers are automatically skipped (use `--frame-screenshots` instead).
+
 ## Browser Requirements
 
 A Chromium executable must be available. Set one of these environment variables:
@@ -105,8 +119,9 @@ screenshots:
 ## Programmatic API
 
 ```js
-const { captureIsiScreenshots, captureFrameScreenshots } = require('@p10agency/banner-screenshot/lib/capture.cjs')
+const { captureIsiScreenshots, captureFrameScreenshots, captureIsiTimingScreenshots } = require('@p10agency/banner-screenshot/lib/capture.cjs')
 
 await captureIsiScreenshots('/path/to/project', '/path/to/output')
 await captureFrameScreenshots('/path/to/project', '/path/to/output')
+await captureIsiTimingScreenshots('/path/to/project', '/path/to/output')
 ```

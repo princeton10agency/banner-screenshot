@@ -2,12 +2,13 @@
 const path = require('path')
 const fs = require('fs')
 
-const { captureIsiScreenshots, captureFrameScreenshots } = require('../lib/capture.cjs')
+const { captureIsiScreenshots, captureFrameScreenshots, captureIsiTimingScreenshots } = require('../lib/capture.cjs')
 
 function parseArgs(argv) {
   const flags = {
     isiScreenshots: false,
     frameScreenshots: false,
+    isiTimingScreenshots: false,
     help: false
   }
   const positional = []
@@ -21,9 +22,14 @@ function parseArgs(argv) {
       flags.frameScreenshots = true
       continue
     }
+    if (arg === '--isi-timing-screenshots') {
+      flags.isiTimingScreenshots = true
+      continue
+    }
     if (arg === '--all') {
       flags.isiScreenshots = true
       flags.frameScreenshots = true
+      flags.isiTimingScreenshots = true
       continue
     }
     if (arg === '--output' || arg === '-o') {
@@ -49,26 +55,17 @@ function parseArgs(argv) {
 
 function printHelp() {
   console.log([
-    'usage: banner-screenshot [path] [--isi-screenshots] [--frame-screenshots] [--all] [--output <dir>]',
+    'usage: banner-screenshot [path] [--isi-screenshots] [--frame-screenshots] [--isi-timing-screenshots] [--all] [--output <dir>]',
     '',
     'Captures screenshots of built banner variants in the dist/ directory.',
     '',
     'Flags:',
-    '  --isi-screenshots     Capture full-height ISI screenshots',
-    '  --frame-screenshots   Capture screenshots of each animation frame',
-    '  --all                 Capture both ISI and frame screenshots',
-    '  --output, -o <dir>    Output directory (default: ./screenshots/)',
-    '  --help, -h            Show this help message',
-    '',
-    'ISI screenshot config in creative.config.json:',
-    '  {',
-    '    "isi_screenshots": {',
-    '      "enabled": true,',
-    '      "hide_selectors": [".isi-sticky-header", ".isi-close-button"]',
-    '    }',
-    '  }',
-    '',
-    'Frame screenshots use addLabel("frameN") markers found in banner JavaScript.'
+    '  --isi-screenshots         Capture full-height ISI screenshots',
+    '  --frame-screenshots      Capture screenshots of each animation frame',
+    '  --isi-timing-screenshots Capture one screenshot at ISI start delay (end of animation)',
+    '  --all                    Capture all screenshot types',
+    '  --output, -o <dir>       Output directory (default: ./screenshots/)',
+    '  --help, -h               Show this help message',
   ].join('\n'))
 }
 
@@ -80,11 +77,11 @@ function main() {
     return Promise.resolve()
   }
 
-  if (!flags.isiScreenshots && !flags.frameScreenshots) {
-    console.log('No screenshot mode specified. Use --isi-screenshots, --frame-screenshots, or --all.')
+  if (!flags.isiScreenshots && !flags.frameScreenshots && !flags.isiTimingScreenshots) {
+    console.log('No screenshot mode specified. Use --isi-screenshots, --frame-screenshots, --isi-timing-screenshots, or --all.')
     printHelp()
     process.exitCode = 1
-    return
+    return Promise.resolve()
   }
 
   const targetPath = path.resolve(process.cwd(), positional[0] || '.')
@@ -104,6 +101,9 @@ function main() {
   }
   if (flags.frameScreenshots) {
     tasks.push(captureFrameScreenshots(targetPath, outputDir))
+  }
+  if (flags.isiTimingScreenshots) {
+    tasks.push(captureIsiTimingScreenshots(targetPath, outputDir))
   }
 
   return Promise.all(tasks)

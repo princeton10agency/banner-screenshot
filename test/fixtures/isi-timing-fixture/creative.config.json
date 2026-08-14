@@ -1,0 +1,10 @@
+{
+  "name": "isi-timing-fixture",
+  "isi_screenshots": { "enabled": true },
+  "sizes": [
+    {
+      "id": "300x250",
+      "javascript": "main.js"
+    }
+  ]
+}

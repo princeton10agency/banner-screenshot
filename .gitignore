@@ -2,3 +2,4 @@ node_modules/
 screenshots/
 dist/
 test/fixtures/*/dist/
+test/fixtures/*/test-output-*/

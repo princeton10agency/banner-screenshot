@@ -6,6 +6,7 @@ const AdmZip = require('adm-zip')
 
 const ROOT = path.resolve(__dirname, '..')
 const FIXTURE = path.join(ROOT, 'test', 'fixtures', 'isi-screenshot-fixture')
+const TIMING_FIXTURE = path.join(ROOT, 'test', 'fixtures', 'isi-timing-fixture')
 
 function listZipEntries(zipPath) {
   const zip = new AdmZip(zipPath)
@@ -130,6 +131,77 @@ async function testFrameScreenshot() {
   fs.rmSync(outputDir, { recursive: true, force: true })
 }
 
+async function testIsiTimingScreenshot() {
+  const projectName = path.basename(TIMING_FIXTURE)
+  const outputDir = path.join(TIMING_FIXTURE, 'test-output-timing')
+  fs.mkdirSync(outputDir, { recursive: true })
+
+  const { captureIsiTimingScreenshots } = require(path.join(ROOT, 'lib', 'capture.cjs'))
+  await captureIsiTimingScreenshots(TIMING_FIXTURE, outputDir)
+
+  const timingZip = path.join(outputDir, `${projectName}-isi-timing-screenshots.zip`)
+  if (!fs.existsSync(timingZip)) {
+    throw new Error('Expected ISI timing screenshot zip to be created')
+  }
+
+  const entries = listZipEntries(timingZip)
+  const pngEntries = entries.filter((e) => e.endsWith('.png'))
+  if (pngEntries.length < 1) {
+    throw new Error('Expected at least one PNG in ISI timing screenshot zip')
+  }
+
+  // Verify dimensions match creative size
+  for (const entry of pngEntries) {
+    const buffer = extractZipEntry(timingZip, entry)
+    const metadata = await sharp(buffer).metadata()
+    if (metadata.width !== 300) {
+      throw new Error(`Expected timing screenshot width 300 for ${entry}, got ${metadata.width}`)
+    }
+    if (metadata.height !== 250) {
+      throw new Error(`Expected timing screenshot height 250 for ${entry}, got ${metadata.height}`)
+    }
+  }
+
+  console.log('  ISI timing screenshots: ' + pngEntries.length + ' screenshot(s), all 300x250')
+  fs.rmSync(outputDir, { recursive: true, force: true })
+}
+
+async function testAllModesOnTimingFixture() {
+  // The timing fixture has no frame markers and no ISI capture element,
+  // so ISI and frame modes should be gracefully skipped while timing succeeds.
+  const outputDir = path.join(TIMING_FIXTURE, 'test-output-all')
+  fs.mkdirSync(outputDir, { recursive: true })
+
+  const { captureIsiScreenshots, captureFrameScreenshots, captureIsiTimingScreenshots } = require(path.join(ROOT, 'lib', 'capture.cjs'))
+
+  // All three should resolve without throwing
+  await Promise.all([
+    captureIsiScreenshots(TIMING_FIXTURE, outputDir),
+    captureFrameScreenshots(TIMING_FIXTURE, outputDir),
+    captureIsiTimingScreenshots(TIMING_FIXTURE, outputDir)
+  ])
+
+  // Only timing zip should exist
+  const files = fs.readdirSync(outputDir).filter((f) => f.endsWith('.zip'))
+  const timingZip = files.find((f) => f.includes('isi-timing'))
+  if (!timingZip) {
+    throw new Error('Expected ISI timing zip after --all on timing fixture')
+  }
+
+  const isiZip = files.find((f) => f.includes('-isi-screenshots') && !f.includes('timing'))
+  if (isiZip) {
+    throw new Error('Did not expect ISI screenshots zip (fixture has no #isi-holder)')
+  }
+
+  const frameZip = files.find((f) => f.includes('frame-screenshots'))
+  if (frameZip) {
+    throw new Error('Did not expect frame screenshots zip (fixture has no frame markers)')
+  }
+
+  console.log('  Mixed mode: only timing zip created, ISI and frame gracefully skipped')
+  fs.rmSync(outputDir, { recursive: true, force: true })
+}
+
 async function testOutputDirFlag() {
   const projectName = path.basename(FIXTURE)
   const customOutput = path.join(FIXTURE, 'custom-output')
@@ -165,6 +237,12 @@ async function main() {
 
   console.log('  Test: Frame screenshot capture')
   await testFrameScreenshot()
+
+  console.log('  Test: ISI timing screenshot capture')
+  await testIsiTimingScreenshot()
+
+  console.log('  Test: All modes on timing fixture (graceful skip)')
+  await testAllModesOnTimingFixture()
 
   console.log('  Test: Custom output directory')
   await testOutputDirFlag()
